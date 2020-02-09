@@ -2,19 +2,21 @@ import numpy as np
 
 def calculate_states_and_M(trajectory):
     """
-    caculates the matrix defining the Markov State Model
+    caculates the transition matrix and the states array
 
     Parameters
     ----------
     trajectory : array_like
-        saved trajectory from previous simulation
+        trajectory from previous simulation
 
     Returns
     ----------
     M : array_like
         transition matrix of the trajectory
+
     states : array_like
-        numpy array including the state (-1 or 1) of each simulation step
+        numpy array including the value of the state (-1 or 1) of each 
+        simulation step
     """ 
 
     x = np.copy(trajectory)
@@ -37,7 +39,8 @@ def calculate_states_and_M(trajectory):
     for i in middle_indices[0]:
         if i==0:
             continue
-        states[i] = states[i-1]
+        else:
+            states[i] = states[i-1]
 
     # calculate population of the two states
     N_left  = len(np.where(states==-1)[0])
@@ -57,9 +60,8 @@ def calculate_states_and_M(trajectory):
     p_left_left   = 1 - p_left_right
     p_right_right = 1 - p_right_left
 
-    # build Markov matrix
+    # build transition matrix
     M = np.array([[p_left_left,  p_left_right ],
                   [p_right_left, p_right_right]])
 
-    return M, states #x[left_indices], x[middle_indices], x[right_indices], states, diff
-
+    return M, states
