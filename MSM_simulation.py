@@ -1,14 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import animation, rc
-import scipy.constants as con
-from IPython.display import HTML
 from tqdm import tqdm
-import time
-import sys
 import os
 
 kbT = 38
+
 
 def U(x):
     """ returns the potential at a given position
@@ -24,6 +20,7 @@ def U(x):
 
     """
     return kbT * (0.28 * (0.25*x**4 + 0.1*x**3 - 3.24*x**2) + 3.5)
+
 
 def dUdx(x):
     """ derivative of the potential at given position
@@ -69,14 +66,14 @@ class Markov_simulation():
             seed for the numpy random generator in order to make the results
             reproducible, default is 5
         """
-        self.x      = np.zeros(steps+1)
-        self.v      = np.zeros(steps+1)
-        self.steps  = steps
-        self.dt     = dt
-        self.m      = m
+        self.x = np.zeros(steps+1)
+        self.v = np.zeros(steps+1)
+        self.steps = steps
+        self.dt = dt
+        self.m = m
         # normal distributed noise with gaussian of mean 0 and variance 1
         np.random.seed(seed)
-        self.R      = np.random.normal(0, 1, size=steps+1)
+        self.R = np.random.normal(0, 1, size=steps+1)
 
     def integrator(self, step, Gamma=100):
         """
@@ -95,11 +92,11 @@ class Markov_simulation():
         self.x[step+1] = self.x[step] + self.v[step] * self.dt
 
         # calculate the velocity at step+1
-        self.v[step+1] =   self.v[step] \
-                         - 1/self.m * dUdx(self.x[step]) * self.dt \
-                         - 1/self.m * Gamma * self.v[step] * self.dt \
-                         + 1/self.m * np.sqrt(2 * kbT * Gamma * self.dt) \
-                           * self.R[step]
+        self.v[step+1] = self.v[step] \
+            - 1/self.m * dUdx(self.x[step]) * self.dt \
+            - 1/self.m * Gamma * self.v[step] * self.dt \
+            + 1/self.m * np.sqrt(2 * kbT * Gamma * self.dt) \
+            * self.R[step]
 
     def simulate(self):
         """ simple method that runs the simulation """
@@ -126,8 +123,8 @@ class Markov_simulation():
 
         np.save(filename, self.x[::interval])
         if printing:
-            print("Saved the trajectory of with interval %ith to the file '%s'"\
-                  %(interval, filename))
+            print("Saved the trajectory of with interval %ith to the file '%s'"
+                  % (interval, filename))
 
 
 def plot_trajectory(trajectory, end_step, start_step=0):
@@ -141,15 +138,16 @@ def plot_trajectory(trajectory, end_step, start_step=0):
     start_step : int, optional
         first step that is included in the plot, default is 0
     """
-    fig, ax = plt.subplots(figsize=(8,3))
+    fig, ax = plt.subplots(figsize=(8, 3))
     ax.set_title(r"Trajectory of the particle")
     ax.set_xlabel(r"Time n $[\Delta t]$")
     ax.set_ylabel(r"Position $x$")
-    ax.ticklabel_format(style='sci', scilimits=(0,0))
+    ax.ticklabel_format(style='sci', scilimits=(0, 0))
 
     ax.plot(trajectory[start_step:end_step])
     ax.xaxis.set_major_locator(plt.MaxNLocator(5))
     plt.tight_layout()
+
 
 def plot_histogram(trajectory, end_step, start_step=0, nbins=30):
     """
@@ -164,7 +162,7 @@ def plot_histogram(trajectory, end_step, start_step=0, nbins=30):
     nbins : int, optional
         number of bins in the histogram, default is 30
     """
-    fig, ax = plt.subplots(figsize=(8,3))
+    fig, ax = plt.subplots(figsize=(8, 3))
     ax.set_title(r"Position distribution of the particle")
     ax.set_xlabel(r"Position $x$")
     ax.set_ylabel(r"Occupation probability")
@@ -173,6 +171,7 @@ def plot_histogram(trajectory, end_step, start_step=0, nbins=30):
     plt.tight_layout()
 
     return h, b
+
 
 def calculate_states_and_M(trajectory):
     """
@@ -197,44 +196,44 @@ def calculate_states_and_M(trajectory):
     states = np.zeros(len(x))
     # set the first state randomly to -1 or 1
     np.random.seed(777)
-    states[0] = np.random.choice([-1,1])
+    states[0] = np.random.choice([-1, 1])
 
-    left_indices   = np.where(x < -1)
-    right_indices  = np.where(1 <  x)
+    left_indices = np.where(x < -1)
+    right_indices = np.where(1 < x)
     middle_indices = np.where((-1 < x) & (x < 1))
 
     # set states of left and right populated positions
-    states[left_indices]  = -1
-    states[right_indices] =  1
+    states[left_indices] = -1
+    states[right_indices] = 1
 
     # now loop over the positions between the cores
     # these states are assigned to the state visited before
     for i in middle_indices[0]:
-        if i==0:
+        if i == 0:
             continue
         else:
             states[i] = states[i-1]
 
     # calculate population of the two states
-    N_left  = len(np.where(states==-1)[0])
-    N_right = len(np.where(states== 1)[0])
+    N_left = len(np.where(states == -1)[0])
+    N_right = len(np.where(states == 1)[0])
 
     # calculate the transitions
     # calculate difference of states[i] and states[i-1]
     diff = states - np.roll(states, 1, axis=0)
     # diff = -2 corresponds to transition right -> left
     # diff =  2 corresponds to transition left  -> right
-    N_left_right = len(np.where(diff== 2)[0])
-    N_right_left = len(np.where(diff==-2)[0])
+    N_left_right = len(np.where(diff == 2)[0])
+    N_right_left = len(np.where(diff == -2)[0])
 
     # calculate the transition probabilities
     p_left_right = N_left_right / N_left
     p_right_left = N_right_left / N_right
-    p_left_left   = 1 - p_left_right
+    p_left_left = 1 - p_left_right
     p_right_right = 1 - p_right_left
 
     # build transition matrix
-    M = np.array([[p_left_left,  p_left_right ],
+    M = np.array([[p_left_left,  p_left_right],
                   [p_right_left, p_right_right]])
 
     return M, states
@@ -268,14 +267,14 @@ def load_traj_and_calc_M(path, lag_times):
 
     for n in lag_times:
         # load the saved trajectory
-        trajectories.update({str(n) : \
-                             np.load(path+"trajectory_with_interval_%i.npy"%(n))})
+        trajectories.update({str(n):
+                             np.load(path+"trajectory_with_interval_%i.npy" % (n))})
         # calculate the states-array and the corresponding transition matrix
         transition_matrix, states_array = \
-                                        calculate_states_and_M(trajectories[str(n)])
+            calculate_states_and_M(trajectories[str(n)])
         # save them in the corresponding dictionaries
-        transition_matrices.update({str(n) : transition_matrix})
-        states.update({str(n) : states_array})
+        transition_matrices.update({str(n): transition_matrix})
+        states.update({str(n): states_array})
 
     return transition_matrices, trajectories, states
 
