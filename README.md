@@ -1,4 +1,4 @@
-# markovstatemodel
+# Construction and Validation of a Markov State Model
 
 This repository shows the demonstration of a simple Markov State Model. 
 The system which is investigated here is inspired by biophysics, though the
